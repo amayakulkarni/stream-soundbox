@@ -146,6 +146,7 @@ refresh_service_and_nginx() {
 command -v node >/dev/null || { echo "Node.js 20+ is required (https://nodejs.org or NodeSource). Install it and re-run." >&2; exit 1; }
 NODE_BIN="$(command -v node)"
 (( $(node -p 'process.versions.node.split(".")[0]') >= 20 )) || { echo "Node 20+ required, found $(node -v)." >&2; exit 1; }
+(( $(node -p 'process.versions.node.split(".")[0]') >= 22 )) || echo "Warning: this is Node $(node -v). The overlay will run, but the Discord bot needs Node 22 or newer and will not start until you upgrade." >&2
 command -v npm >/dev/null || { echo "npm is required for the Discord bot's packages. Install it and re-run." >&2; exit 1; }
 
 

@@ -3,7 +3,7 @@
 A pink, minimal OBS browser-source overlay that shows live **YouTube**, **Twitch** and **Buy Me a Coffee** supporter numbers and announces each new supporter by name, one every 5 seconds.
 
 - Includes **Snitch**, the Magenta Forge Discord bot, which runs in the same process (see [Discord bot](#discord-bot))
-- Node.js 20.11+. Run `npm install` once. The overlay alone needs no packages: they only load when the bot is switched on
+- Node.js 22+ for the bot (the overlay alone runs on 20+). Run `npm install` once. The overlay alone needs no packages: they only load when the bot is switched on
 - Port `42001`, configured through `.env`
 - Webhooks for Twitch and Buy Me a Coffee, polling for YouTube
 - Admin dashboard at `/admin`
