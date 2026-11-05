@@ -95,8 +95,12 @@ sync_extras() {
   done
 }
 
+# --ignore-scripts because better-sqlite3 ships ready-made binaries, and its install script would otherwise try to compile
+# it, which fails on a server with no compiler. ffmpeg-static does need its script: it downloads ffmpeg for the ambience
+# sounds. If that download fails, only the voice-room ambience is affected, so it is a warning and not a failed update.
 install_packages() {
-  (cd "$APP_DIR" && npm ci --omit=dev --no-audit --no-fund)
+  (cd "$APP_DIR" && npm ci --omit=dev --no-audit --no-fund --ignore-scripts) || return 1
+  (cd "$APP_DIR" && npm rebuild ffmpeg-static --no-audit --no-fund >/dev/null 2>&1) || echo "Warning: could not download ffmpeg. Ambience in voice rooms will not play until 'npm rebuild ffmpeg-static' works."
 }
 
 # Adds settings that exist in .env.example but not yet in your .env (never changes values you already have).
