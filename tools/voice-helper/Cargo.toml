@@ -1,0 +1,18 @@
+[package]
+name = "supporters-voice"
+version = "1.0.0"
+edition = "2021"
+description = "Reads supporter announcements aloud. Its audio comes from this one app, so OBS can capture it with Application Audio Capture."
+
+# Versions are pinned on purpose: the source was written without being able to compile it
+# (no crates.io access where it was authored), so use exactly the APIs these versions have.
+[dependencies]
+ureq = "2.10"
+tts = "0.26.3"
+rodio = { version = "0.19", default-features = false, features = ["wav"] }
+eframe = { version = "=0.29.1", default-features = false, features = ["default_fonts", "glow"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

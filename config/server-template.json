@@ -1,0 +1,153 @@
+{
+  "_readme": "The Magenta Forge layout. `npm run setup` shows what would change; `npm run setup:apply` makes it so and writes the IDs to config/discord-tiers.json. Run it again any time: nothing is duplicated. Access rules: gate (only people not yet verified), verified (every verified member), readonly (verified members read, staff write), staff, tier:<slug> (that tier and higher), role:<key> (that role and staff), league (Esports League role, teams, commissioners, staff). ambience:true lets the helper bots join a private voice room.",
+  "guildName": "Magenta Forge",
+  "roles": [
+    { "key": "founder", "name": "Forge Founder", "color": "#ff267c", "permissions": ["ManageGuild", "ManageRoles", "ManageChannels", "ManageEvents", "ManageMessages", "ManageThreads", "ManageNicknames", "ModerateMembers", "KickMembers", "BanMembers", "MuteMembers", "MoveMembers", "DeafenMembers", "ViewAuditLog", "MentionEveryone"], "staff": 0 },
+    { "key": "representative", "name": "Community Rep", "color": "#ff5c9d", "permissions": ["ManageEvents", "ManageThreads", "ViewAuditLog"], "staff": 1 },
+    { "key": "warden", "name": "Forge Warden", "color": "#ff8ab8", "permissions": ["ModerateMembers", "KickMembers", "BanMembers", "ManageMessages", "ManageThreads", "MuteMembers", "MoveMembers", "DeafenMembers", "ViewAuditLog", "ManageEvents"], "staff": 2 },
+    { "key": "commissioner", "name": "League Commissioner", "color": "#c77dff", "permissions": ["ManageEvents"] },
+    { "key": "grandElder", "name": "Grand Elder", "color": "#ffd166" },
+    { "key": "elder", "name": "Forge Elder", "color": "#f4a261" },
+    { "tier": 5, "color": "#ff267c" },
+    { "tier": 4, "color": "#9b5de5" },
+    { "tier": 3, "color": "#f15bb5" },
+    { "tier": 2, "color": "#f3722c" },
+    { "tier": 1, "color": "#ffba08" },
+    { "tierAccess": 5 },
+    { "tierAccess": 4 },
+    { "tierAccess": 3 },
+    { "tierAccess": 2 },
+    { "tierAccess": 1 },
+    { "key": "tourist", "nameFromEnv": "TOURIST_NAME", "defaultName": "Visitor", "color": "#b8b8c8" },
+    { "key": "hobby:build-streams", "name": "Build Stream Pings", "hobby": { "slug": "build-streams", "label": "Build stream pings", "emoji": "🛠️" } },
+    { "key": "hobby:gameplay-streams", "name": "Gameplay Stream Pings", "hobby": { "slug": "gameplay-streams", "label": "Gameplay stream pings", "emoji": "🎮" } },
+    { "key": "hobby:gaming", "name": "Co-op Gamer", "hobby": { "slug": "gaming", "label": "Co-op gaming", "emoji": "🕹️" } },
+    { "key": "hobby:makers", "name": "Maker", "hobby": { "slug": "makers", "label": "3D printing and makers", "emoji": "🧱" } },
+    { "key": "hobby:homelab", "name": "Homelabber", "hobby": { "slug": "homelab", "label": "Homelab and code", "emoji": "🖧" } },
+    { "key": "hobby:art", "name": "Digital Artist", "hobby": { "slug": "art", "label": "Digital art", "emoji": "🎨" } },
+    { "key": "hobby:writing", "name": "Writer", "hobby": { "slug": "writing", "label": "Creative writing", "emoji": "✒️" } },
+    { "key": "hobby:esports", "name": "Esports League", "hobby": { "slug": "esports", "label": "Esports League", "emoji": "🏆", "requires": "gaming" } },
+    { "key": "team:hammer", "name": "Team Hammer", "color": "#e63946", "team": { "key": "hammer", "name": "Hammer", "emoji": "🔨" } },
+    { "key": "team:tongs", "name": "Team Tongs", "color": "#4895ef", "team": { "key": "tongs", "name": "Tongs", "emoji": "🗜️" } },
+    { "key": "team:bellows", "name": "Team Bellows", "color": "#2a9d8f", "team": { "key": "bellows", "name": "Bellows", "emoji": "💨" } },
+    { "key": "team:rust", "name": "Team Rust", "color": "#bc6c25", "team": { "key": "rust", "name": "Rust", "emoji": "🦠" } },
+    { "key": "verified", "name": "Forged", "permissions": ["ViewChannel", "SendMessages", "ReadMessageHistory", "AddReactions", "EmbedLinks", "AttachFiles", "UseExternalEmojis", "UseApplicationCommands", "CreatePublicThreads", "SendMessagesInThreads", "Connect", "Speak", "Stream", "UseVAD", "ChangeNickname"] },
+    { "key": "ambience", "name": "Forge Ambience", "permissions": ["ViewChannel", "Connect", "Speak", "SendMessages", "AttachFiles", "ReadMessageHistory", "SetVoiceChannelStatus"] }
+  ],
+  "categories": [
+    {
+      "key": "gate", "name": "🚪 THE GATE", "access": "gate",
+      "channels": [
+        { "key": "gateRules", "name": "gate-rules", "topic": "The rules of Magenta Forge. A copy of the members' #rules.", "mirrorOf": "rules" },
+        { "key": "gateAnnouncements", "name": "gate-announcements", "topic": "Stream schedules and new videos. A copy of the members' #announcements.", "mirrorOf": "announcements" },
+        { "key": "verificationHelp", "name": "verification-help", "topic": "Use the buttons here to send your intro, link your membership or ask for help. Only the staff read what you send.", "gateCommands": true }
+      ]
+    },
+    {
+      "key": "start", "name": "📌 START HERE", "access": "readonly",
+      "channels": [
+        { "key": "rules", "name": "rules", "topic": "Clear, non-negotiable boundaries for the community." },
+        { "key": "announcements", "name": "announcements", "topic": "Stream schedules, server updates and new video links." },
+        { "key": "college", "name": "pick-your-roles", "topic": "Choose stream pings and interests. Use the menu below." },
+        { "key": "thankYou", "name": "supporter-wall", "topic": "Thank you to everyone who keeps the forge burning. Members who opt in with /thanks are welcomed here." }
+      ]
+    },
+    {
+      "key": "forge", "name": "🔥 THE FORGE", "access": "verified",
+      "channels": [
+        { "key": "general", "name": "the-forge-general", "topic": "A warm, everyday channel for casual chats and hanging out." },
+        { "key": "viceCity", "name": "vice-city-grind", "topic": "Open-world gaming, GTA Online heists and upcoming GTA 6 sessions." },
+        { "key": "nightCity", "name": "night-city-chat", "topic": "Cyberpunk 2077 gameplay, mods and cyberpunk aesthetic discussions." },
+        { "key": "workbench", "name": "maker-workbench", "topic": "Show off 3D printed lithophanes, Node.js bridges and custom homelab routing setups." },
+        { "key": "streamLive", "name": "stream-live", "topic": "Chat with Twitch and YouTube viewers while Amaya is live." }
+      ]
+    },
+    {
+      "key": "voice", "name": "🔊 VOICE", "access": "verified",
+      "channels": [
+        { "key": "lounge", "name": "The Lounge", "type": "voice", "topic": "Low-pressure downtime and good conversations." },
+        { "key": "coop", "name": "Co-op Gaming", "type": "voice", "topic": "Coordinating active multiplayer sessions." },
+        { "key": "buildRoom", "name": "Build Room", "type": "voice", "topic": "Focus sessions with /pomodoro while you work on your own build." }
+      ]
+    },
+    {
+      "key": "supporters", "name": "☕ SUPPORTER LOUNGES", "access": "tier:1",
+      "channels": [
+        { "key": "backstage", "name": "backstage", "access": "tier:1", "topic": "For every supporter: stream previews and behind-the-scenes." },
+        { "key": "backstageVoice", "name": "Backstage", "type": "voice", "access": "tier:1", "ambience": true },
+        { "key": "forgehandBench", "name": "forgehand-bench", "access": "tier:3", "topic": "Forgehand and up: vote on what gets built or played next." },
+        { "key": "netrunnerDen", "name": "netrunner-den", "access": "tier:4", "topic": "Netrunner and up: build files, configs and early access." },
+        { "key": "magentaCore", "name": "magenta-core", "access": "tier:5", "topic": "Magenta Core: a direct line to Amaya." },
+        { "key": "magentaCoreVoice", "name": "Core Room", "type": "voice", "access": "tier:5", "ambience": true }
+      ]
+    },
+    {
+      "key": "elderCategory", "name": "🕯️ ELDER HALL", "access": "role:elder+grandElder",
+      "channels": [
+        { "key": "elderHall", "name": "elder-hall", "topic": "For members who have been part of the forge for a while." },
+        { "key": "elderCampfire", "name": "Elder Campfire", "type": "voice", "ambience": true },
+        { "key": "elderLounge", "name": "Elder Lounge", "type": "voice", "ambience": true },
+        { "key": "elderLobby", "name": "Create a Room", "type": "voice", "topic": "Join to get your own private voice room." }
+      ]
+    },
+    {
+      "key": "leagueCategory", "name": "🏆 ESPORTS LEAGUE", "access": "league",
+      "channels": [
+        { "key": "rulebook", "name": "league-rulebook", "readOnly": true, "topic": "How the Magenta Forge League works." },
+        { "key": "fixtures", "name": "fixtures", "readOnly": true },
+        { "key": "scoreboard", "name": "scoreboard", "readOnly": true },
+        { "key": "matchReports", "name": "match-reports", "readOnly": true },
+        { "key": "office", "name": "league-office" },
+        { "key": "arena", "name": "The Arena", "type": "voice" }
+      ]
+    },
+    {
+      "key": "artRooms", "name": "🎨 DIGITAL ART", "access": "role:hobby:art",
+      "channels": [
+        { "key": "artText", "name": "art-studio", "hobbyText": "art" },
+        { "key": "artVoice", "name": "Art Studio", "type": "voice", "hobbyVoice": "art", "ambience": true }
+      ]
+    },
+    {
+      "key": "writingRooms", "name": "✒️ CREATIVE WRITING", "access": "role:hobby:writing",
+      "channels": [
+        { "key": "writingText", "name": "writing-desk", "hobbyText": "writing" },
+        { "key": "writingVoice", "name": "Writing Desk", "type": "voice", "hobbyVoice": "writing", "ambience": true }
+      ]
+    },
+    {
+      "key": "support", "name": "🎫 SUPPORT", "access": "verified",
+      "channels": [
+        { "key": "ticketDesk", "name": "open-a-ticket", "readOnly": true, "topic": "Press the button to talk privately to the staff." }
+      ]
+    },
+    {
+      "key": "ticketCategory", "name": "🎫 OPEN TICKETS", "access": "staff",
+      "channels": []
+    },
+    {
+      "key": "introCategory", "name": "📝 INTRO REVIEW", "access": "staff",
+      "channels": []
+    },
+    {
+      "key": "staffRoom", "name": "🛡️ STAFF", "access": "staff",
+      "channels": [
+        { "key": "staffChat", "name": "staff-room" },
+        { "key": "modLog", "name": "mod-log" },
+        { "key": "botLog", "name": "bot-log" },
+        { "key": "ticketTranscripts", "name": "ticket-transcripts", "topic": "Archived tickets and approved intros. Private to the staff." }
+      ]
+    }
+  ],
+  "league": {
+    "games": [
+      { "slug": "gta-online", "label": "GTA Online" },
+      { "slug": "gta-6", "label": "GTA 6" },
+      { "slug": "fortnite", "label": "Fortnite" },
+      { "slug": "minecraft", "label": "Minecraft (side quest)" },
+      { "slug": "cyberpunk", "label": "Cyberpunk 2077 (side quest)" }
+    ]
+  },
+  "grace": { "lapseDays": 7, "remindDaysBeforeEnd": [3], "remindDuringGrace": [0, 5] },
+  "elder": { "afterDays": 90, "activeDaysRequired": 30, "activityWindowDays": 90, "privateRoomPrefix": "Private: ", "maxRoomsPerElder": 1 }
+}

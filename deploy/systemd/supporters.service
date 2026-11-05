@@ -1,0 +1,29 @@
+[Unit]
+Description=Supporters overlay for OBS (YouTube / Twitch / Buy Me a Coffee) and the Magenta Forge Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=supporters
+Group=supporters
+WorkingDirectory=/opt/supporters-overlay
+ExecStart=__NODE__ src/server.js
+Restart=always
+RestartSec=3
+
+# Hardening: the app only ever writes to its data directory.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/opt/supporters-overlay/data
+
+[Install]
+WantedBy=multi-user.target

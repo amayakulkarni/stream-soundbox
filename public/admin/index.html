@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Admin · supporters</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="/admin/assets/admin.css">
+</head>
+<body>
+  <header class="top">
+    <h1>supporters</h1>
+    <span id="live" class="live" title="Connection to the server"><i></i><span>connecting</span></span>
+    <span id="overlays" class="muted"></span>
+    <form method="post" action="/admin/logout"><button class="btn ghost" type="submit">Sign out</button></form>
+  </header>
+
+  <p id="notice" class="notice" role="status" hidden></p>
+
+  <main class="grid">
+    <section class="panel span-12" id="p-links"></section>
+    <section class="panel span-7" id="p-counters"></section>
+    <section class="panel span-5" id="p-announce"></section>
+    <section class="panel span-7" id="p-chat"></section>
+    <section class="panel span-5" id="p-look"></section>
+    <section class="panel span-12" id="p-sound"></section>
+    <section class="panel span-12" id="p-connections"></section>
+    <section class="panel span-5" id="p-types"></section>
+    <section class="panel span-7" id="p-activity"></section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/assets/sounds.js"></script>
+  <script src="/admin/assets/admin.js"></script>
+</body>
+</html>

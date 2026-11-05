@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>supporters overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="/assets/overlay.css">
+</head>
+<body>
+  <div class="zone zone-counters"><div id="counters" class="counters"></div></div>
+  <div class="zone zone-alerts"><div id="alert-layer" class="alert-layer" aria-live="polite"></div></div>
+  <div class="zone zone-chat"><div id="chat" class="chat" aria-live="off"></div></div>
+  <div class="zone zone-solo">
+    <div id="goal" class="goal" hidden><div class="goal-top"><span id="goal-title" class="goal-title"></span><span id="goal-nums" class="goal-nums"></span></div><div class="goal-track"><div id="goal-fill" class="goal-fill"></div></div></div>
+    <div id="status" class="status" hidden></div>
+    <div id="latest" class="latest" hidden><span class="latest-badge"></span><div class="latest-body"><div id="latest-kicker" class="latest-kicker"></div><div id="latest-name" class="latest-name"></div></div></div>
+  </div>
+  <button id="sound-hint" class="sound-hint" type="button" hidden>Click once to turn sound on</button>
+  <script src="/assets/sounds.js"></script>
+  <script src="/assets/overlay.js"></script>
+</body>
+</html>

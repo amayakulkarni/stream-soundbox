@@ -1,0 +1,34 @@
+/* Candy-sticker theme: solid fills, thick plum outlines, hard shadows, one colour per platform.
+   Shared by the OBS overlay and the dashboard. */
+:root {
+  --ink: #2a0a22;        /* outlines and text: deep plum, never pure black */
+  --paper: #fff9fc;
+  --blush: #ffd9ea;
+  --pink: #ff5aa5;       /* bubblegum */
+  --hot: #ff1f7d;        /* accents, YouTube */
+  --lilac: #cdb4ff;
+  --violet: #a67cff;     /* Twitch */
+  --sky: #9cc4ff;        /* Discord */
+  --butter: #ffe27a;     /* compute / super chats */
+  --mint: #7fe3b4;
+
+  /* kept for the older names the dashboard still uses */
+  --plum: var(--ink);
+  --magenta: var(--hot);
+  --berry: #b0125f;
+  --mauve: #7a4d6c;
+  --rose: var(--pink);
+  --petal: var(--blush);
+  --line: var(--ink);
+
+  --glass-a: 0.94; /* sticker fill opacity: dashboard "Panel opacity" or ?glass=0-100 */
+  --fill: rgba(255, 249, 252, var(--glass-a));
+  --glass: var(--fill);
+  --outline: 3.5px;
+  --pop: 5px 5px 0 var(--ink);
+  --shadow: var(--pop);
+  --glow: none;
+
+  --font-display: 'Bagel Fat One', 'Arial Rounded MT Bold', 'Chalkboard SE', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Nunito', ui-rounded, 'Arial Rounded MT Bold', 'Segoe UI', system-ui, sans-serif;
+}

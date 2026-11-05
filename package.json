@@ -1,0 +1,34 @@
+{
+  "name": "supporters-overlay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OBS browser-source overlay (live YouTube / Twitch / Buy Me a Coffee supporter counts, paced announcements, admin dashboard) and Snitch, the Magenta Forge Discord bot, in one app.",
+  "main": "src/server.js",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "start:supervised": "node scripts/supervise.js",
+    "dev": "node --watch src/server.js",
+    "test": "node test/ytanon.js && node test/run.js && node test/chat.js && node test/disable.js && node test/bot-bridge.js && node --test test/bot/gate.test.mjs test/bot/rules.test.mjs",
+    "setup": "node scripts/bot/setup.mjs",
+    "setup:apply": "node scripts/bot/setup.mjs --apply",
+    "helpers:setup": "node scripts/bot/helpers-setup.mjs",
+    "invites": "node scripts/bot/helpers-setup.mjs --invites",
+    "audit:gate": "node scripts/bot/audit-gate.mjs",
+    "ambience:generate": "node scripts/bot/generate-ambience.mjs"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.19.2",
+    "@snazzah/davey": "^0.2.0",
+    "better-sqlite3": "^13.0.3",
+    "discord.js": "^14.28.1",
+    "dotenv": "^18.0.9",
+    "ffmpeg-static": "^5.3.0",
+    "nodemailer": "^10.3.1",
+    "opusscript": "^0.0.8",
+    "prism-media": "^1.3.5"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "_readme": "Optional. Copy to config/ambience.json to add to or change the rooms in src/ambience.mjs. key: the sound. Your own music: audio/<key>.mp3, or a folder audio/<key>/ for a random track each time. match: words looked for in voice channel names. channelId: pin a room to a channel. status: the line under the channel name. visual and caption: assets/visuals/<visual>.gif posted in the room's chat. gainDb: louder or softer. AMBIENCE=off in .env turns everything off. A helper bot joins when the first person arrives and leaves leaveDelaySeconds after the last one goes.",
+  "enabled": true,
+  "leaveDelaySeconds": 20,
+  "rooms": [
+    { "key": "the-lounge", "gainDb": 0 },
+    { "key": "the-lounge-example", "match": ["some other room"], "status": "🎶 your own room" }
+  ]
+}
