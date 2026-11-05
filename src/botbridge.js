@@ -11,7 +11,11 @@ function createBotBridge({ enabled, load, log, startWaitMs = START_WAIT_MS }) {
   let starting = null;
 
   function start() {
-    if (!enabled || starting) return starting;
+    if (!enabled) {
+      log('[bot] off: SNITCH_BOT_TOKEN is not set in .env');
+      return null;
+    }
+    if (starting) return starting;
     starting = Promise.resolve()
       .then(load)
       .then((m) => m.startBot({ webhook: false, handleSignals: false }))
