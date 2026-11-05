@@ -6,7 +6,7 @@ import { createActivity } from './activity.mjs';
 import { createAmbience, loadAmbienceConfig, matchRooms } from './ambience.mjs';
 import { createVoiceEntry, humansInChannel, setStatus, startHelperClients, voiceChannels } from './ambience-voice.mjs';
 import { applyEvent, receiveWebhook, startWebhookServer } from './bmc.mjs';
-import { reconcileWithBmc } from './bmc-api.mjs';
+import { checkOverdue } from './bmc-overdue.mjs';
 import { buildCommands } from './commands.mjs';
 import { loadConfig, readEnv, ROOT } from './config.mjs';
 import { createDiscordCore, createIntroAdapter, createLeagueAdapter, createMirrorAdapter, createProductivityAdapter, createTicketAdapter, mirrorSource, row, upsertPanel } from './discord-adapters.mjs';
@@ -309,11 +309,11 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
   every(5 * MIN, 'activity', () => activity.flush());
   every(15 * MIN, 'sweep', () => sync.syncAll('sweep'));
   const checkBmc = async () => {
-    const r = await reconcileWithBmc({ env, store, sync, log: (t) => core.post(cfg.channels.botLog, t).catch(() => {}) });
-    if (r.lapsed || r.skipped === 'no usable data') log('Buy Me a Coffee check', JSON.stringify(r));
+    const r = await checkOverdue({ store, sync, autoLapse: env.lapseWithoutRenewal, post: (t) => core.post(cfg.channels.modLog, t).catch(() => {}) });
+    if (r.flagged || r.lapsed) log('Buy Me a Coffee overdue check', JSON.stringify(r));
   };
-  every(60 * MIN, 'Buy Me a Coffee check', checkBmc);
-  checkBmc().catch((err) => log('Buy Me a Coffee check:', err.message));
+  every(60 * MIN, 'Buy Me a Coffee overdue check', checkBmc);
+  checkBmc().catch((err) => log('Buy Me a Coffee overdue check:', err.message));
   every(6 * 60 * MIN, 'tidy', async () => {
     activity.expire();
     store.todoExpire(TODO_LIMITS.personalDays, TODO_LIMITS.roomDays);

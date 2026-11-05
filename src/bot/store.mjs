@@ -392,6 +392,7 @@ export function openStore(dbPath) {
     markDelivered: (id, key) => db.prepare('UPDATE discord_notices SET delivered = 1 WHERE discord_id = ? AND notice_key = ?').run(id, key),
     undelivered: (id) =>
       db.prepare('SELECT notice_key, message FROM discord_notices WHERE discord_id = ? AND delivered = 0 ORDER BY created_at').all(id),
+    membershipById: (id) => db.prepare('SELECT * FROM memberships WHERE subscription_id = ?').get(id) ?? null,
     activeMemberships: () => db.prepare("SELECT * FROM memberships WHERE status = 'active'").all(),
     lapse: (subscriptionId) =>
       db.prepare("UPDATE memberships SET status = 'lapsed', ended_at = ?, updated_at = ? WHERE subscription_id = ? AND status = 'active'").run(nowIso(), nowIso(), subscriptionId),

@@ -56,7 +56,7 @@ Start this soon after stage 1. Until the bot is on, membership events are not re
 
 **1. Upgrade to Node 22 or newer** if step 1 showed an older version, then repeat the update command so packages are installed for the new version.
 
-**2. Fill in the bot's settings** in `/opt/supporters-overlay/.env`: `SNITCH_BOT_TOKEN`, `SNITCH_CLIENT_ID`, `DISCORD_GUILD_ID`, the helper tokens and client IDs, `BMC_API_TOKEN`, and SMTP if you want email codes. The tier names are already there. Keep your existing `BMC_WEBHOOK_SECRET` and `BMC_WEBHOOK_TOKEN`. Don't restart yet.
+**2. Fill in the bot's settings** in `/opt/supporters-overlay/.env`: `SNITCH_BOT_TOKEN`, `SNITCH_CLIENT_ID`, `DISCORD_GUILD_ID`, the helper tokens and client IDs, and SMTP if you want email codes. The tier names are already there. Keep your existing `BMC_WEBHOOK_SECRET` and `BMC_WEBHOOK_TOKEN`. Don't restart yet.
 
 **3. Discord Developer Portal:** turn on Server Members Intent and Message Content Intent for Snitch.
 
@@ -92,7 +92,9 @@ journalctl -u supporters -f
 - Join The Lounge and check a helper plays ambience.
 - Set `BMC_ACCEPT_TEST_EVENTS=on`, restart, send a Buy Me a Coffee test event, and check the log and `/tiers`. Then set it back to `off` and restart. The bot's field names come from public guides rather than an official reference, so this is the check most likely to find something.
 
-**Existing paying members:** the hourly check only updates memberships the bot already knows about, so it won't import people who joined before the bot was on. They need `/membership grant`, or a new event from Buy Me a Coffee, before `/link` will find them.
+**Existing paying members:** the bot can only learn about memberships from webhooks, so people who joined before it was on are unknown to it. They need `/membership grant`, or a new event from Buy Me a Coffee, before `/link` will find them.
+
+**Ending memberships:** with webhooks only, a tier ends when Buy Me a Coffee sends a cancellation or a mod uses `/membership revoke`. If a paid period passes with no event for 3 days, the mod log gets one message asking someone to check the dashboard. After the first real renewal, run `journalctl -u supporters | grep "renewal seen"`. If that line is there, you can set `BMC_LAPSE_WITHOUT_RENEWAL=on` so silent memberships go into grace automatically.
 
 ## If something goes wrong
 

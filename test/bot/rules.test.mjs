@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import test from 'node:test';
 import { createAmbience, loadAmbienceConfig, matchRooms, normalizeName } from '../../src/bot/ambience.mjs';
-import { reconcileWithBmc } from '../../src/bot/bmc-api.mjs';
+import { checkOverdue } from '../../src/bot/bmc-overdue.mjs';
 import { createActivity } from '../../src/bot/activity.mjs';
 import { applyEvent, parseEvent, verifySignature, toIso } from '../../src/bot/bmc.mjs';
 import { elderProgress, entitlement, isElder, roleDiff, tierForLevel, wantedRoles } from '../../src/bot/core.mjs';
@@ -66,7 +66,7 @@ test('a level is matched by ID, then name, then falls back to the lowest tier', 
 
 test('active never ends by date; cancelled → grace → none', () => {
   const m = { level_name: 'Ember', status: 'active', paid_until: new Date(T0 + 10 * DAY).toISOString() };
-  assert.equal(entitlement(cfg, { memberships: [m] }, T0 + 400 * DAY).state, 'active', 'it renews until the hourly check says otherwise');
+  assert.equal(entitlement(cfg, { memberships: [m] }, T0 + 400 * DAY).state, 'active', 'it lasts until a webhook or a mod ends it');
   const c = { ...m, status: 'cancelling' };
   assert.equal(entitlement(cfg, { memberships: [c] }, T0).endsAt, T0 + 10 * DAY);
   assert.equal(entitlement(cfg, { memberships: [c] }, T0 + 12 * DAY).state, 'grace');
@@ -451,20 +451,52 @@ test('private rooms: Elders and Grand Elders make them; limit, close and the not
   store.close();
 });
 
-test('Buy Me a Coffee check: renews, lapses, and changes nothing on an unusable answer', async () => {
+test('a paid period passing in silence: mods are told once and nobody loses a tier by default', async () => {
   const { store, sync } = setup();
-  const env = { bmcApiToken: 't', bmcApiUrl: 'https://x' };
-  store.upsertMembership({ ...member, subscriptionId: 'live' });
-  store.upsertMembership({ ...member, subscriptionId: 'gone', email: 'gone@b.co', paidUntil: new Date(Date.now() - DAY).toISOString() });
-  const answer = (data) => async () => ({ ok: true, json: async () => ({ data }) });
-  const useless = await reconcileWithBmc({ env, store, sync, fetchImpl: answer([{ subscription_id: 'live' }]) });
-  assert.equal(useless.skipped, 'no usable data');
-  assert.equal(store.activeMemberships().length, 2);
-  const r = await reconcileWithBmc({ env, store, sync, fetchImpl: answer([{ subscription_id: 'live', payer_email: 'a@b.co', subscription_current_period_end: '2030-01-01 00:00:00' }]) });
-  assert.equal(r.lapsed, 1);
-  assert.equal(r.renewed, 1);
-  assert.deepEqual(store.activeMemberships().map((m) => m.subscription_id), ['live']);
-  assert.deepEqual(await reconcileWithBmc({ env: {}, store, sync }), { skipped: 'BMC_API_TOKEN not set' });
+  const end = Date.now() - 10 * DAY;
+  store.upsertMembership({ ...member, subscriptionId: 'quiet', email: 'quiet@b.co', paidUntil: new Date(end).toISOString() });
+  store.upsertMembership({ ...member, subscriptionId: 'fresh', email: 'fresh@b.co', paidUntil: new Date(Date.now() - DAY).toISOString() });
+  store.upsertMembership({ ...member, subscriptionId: 'nodate', email: 'nodate@b.co', paidUntil: null });
+  const posts = [];
+  const post = async (t) => posts.push(t);
+  assert.deepEqual(await checkOverdue({ store, sync, post }), { flagged: 1, lapsed: 0 });
+  assert.equal(posts.length, 1);
+  assert.ok(posts[0].includes('/membership revoke'));
+  assert.ok(!posts[0].includes('quiet@b.co'), 'the mod log never shows a full email');
+  assert.equal(store.activeMemberships().length, 3, 'nobody loses a tier');
+  await checkOverdue({ store, sync, post });
+  assert.equal(posts.length, 1, 'told only once per paid period');
+  // A later period that also passes in silence is a new notice.
+  store.setPaidUntil('quiet', new Date(end + DAY).toISOString());
+  await checkOverdue({ store, sync, post });
+  assert.equal(posts.length, 2);
+  store.close();
+});
+
+test('BMC_LAPSE_WITHOUT_RENEWAL=on: a silent paid period starts the grace period', async () => {
+  const { store, sync } = setup();
+  const end = Date.now() - 10 * DAY;
+  store.upsertMembership({ ...member, subscriptionId: 'quiet', email: 'quiet@b.co', paidUntil: new Date(end).toISOString() });
+  store.upsertMembership({ ...member, subscriptionId: 'fresh', email: 'fresh@b.co', paidUntil: new Date(Date.now() + 5 * DAY).toISOString() });
+  assert.deepEqual(await checkOverdue({ store, sync, autoLapse: true }), { flagged: 0, lapsed: 1 });
+  assert.deepEqual(store.activeMemberships().map((m) => m.subscription_id), ['fresh']);
+  const [m] = store.membershipsFor('quiet@b.co');
+  assert.equal(entitlement(cfg, { memberships: [m] }).state, 'grace');
+  store.close();
+});
+
+test('a webhook that moves the paid period forward is recognised as a renewal, and clears the overdue state', async () => {
+  const { store, sync } = setup();
+  const lines = [];
+  const body = (end) => ({ type: 'membership.updated', live_mode: true, data: { id: 'r1', supporter_email: 'r@b.co', membership_level_name: 'Ember', current_period_end: end } });
+  const first = await applyEvent(body('2020-01-01T00:00:00Z'), { store, sync, log: (l) => lines.push(l) });
+  assert.ok(!first.renewed);
+  const again = await applyEvent(body('2020-01-01T00:00:00Z'), { store, sync, log: (l) => lines.push(l) });
+  assert.ok(!again.renewed, 'a repeat of the same event is not a renewal');
+  const next = await applyEvent(body('2999-02-01T00:00:00Z'), { store, sync, log: (l) => lines.push(l) });
+  assert.equal(next.renewed, true);
+  assert.ok(lines.some((l) => l.startsWith('renewal seen')));
+  assert.deepEqual(await checkOverdue({ store, sync, autoLapse: true }), { flagged: 0, lapsed: 0 });
   store.close();
 });
 

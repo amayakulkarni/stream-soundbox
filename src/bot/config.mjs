@@ -67,8 +67,7 @@ export function readEnv(env = process.env) {
     youtubeUrl: val(env, 'YOUTUBE_URL') || 'https://youtube.com/@Amaya.Kulkarni',
     webhookPort: Number(val(env, 'WEBHOOK_PORT') || 8787),
     webhookSecret: val(env, 'BMC_WEBHOOK_SECRET'),
-    bmcApiToken: val(env, 'BMC_API_TOKEN'),
-    bmcApiUrl: (val(env, 'BMC_API_URL') || 'https://developers.buymeacoffee.com/api/v1').replace(/\/$/, ''),
+    lapseWithoutRenewal: ['on', 'true', '1', 'yes'].includes(String(env.BMC_LAPSE_WITHOUT_RENEWAL ?? '').toLowerCase()),
     elderRequireEmail: !['off', 'false', '0', 'no'].includes(String(env.ELDER_REQUIRE_EMAIL ?? 'on').toLowerCase()),
     acceptTestWebhooks: ['on', 'true', '1', 'yes'].includes(String(env.BMC_ACCEPT_TEST_EVENTS ?? '').toLowerCase()),
     smtp: {

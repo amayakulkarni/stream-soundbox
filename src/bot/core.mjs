@@ -1,8 +1,8 @@
 // The membership rules, with no Discord or database in them.
 //
 // A member's class comes from, in order of strength:
-//   - an active Buy Me a Coffee membership for their linked email (no end date: Buy Me a
-//     Coffee renews it; the hourly check ends it if it stops being active),
+//   - an active Buy Me a Coffee membership for their linked email (no end date: it lasts until
+//     a webhook ends it, or a mod does; see bmc-overdue.mjs),
 //   - a cancelled or paused membership, until the end of the period they paid for,
 //   - a complimentary class from /membership grant, until it expires,
 // and after any of those ends, a grace period (7 days) with the same class. /unlink also

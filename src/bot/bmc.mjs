@@ -1,4 +1,4 @@
-// Buy Me a Coffee: the webhook that records memberships. The hourly API check is in bmc-api.mjs.
+// Buy Me a Coffee: the webhook that records memberships. What happens when a paid period passes in silence is in bmc-overdue.mjs.
 //
 // Field and header names below follow what Buy Me a Coffee's webhook sends as far as public docs show, and the reader is
 // deliberately tolerant. Send a test event from the Buy Me a Coffee dashboard to confirm: unknown shapes are logged.
@@ -38,7 +38,7 @@ export function parseEvent(body, { acceptTest = false } = {}) {
   const periodEnd = toIso(d.current_period_end ?? d.subscription_current_period_end);
   const cancelled = type === 'membership.cancelled' || type === 'membership.canceled' || String(d.canceled ?? d.cancelled) === 'true' || d.status === 'canceled' || d.status === 'cancelled';
   const paused = String(d.paused) === 'true' || d.status === 'paused';
-  // An active membership has no end date: it renews until the hourly check says otherwise. A cancelled or paused one runs to the end of the paid period, then grace.
+  // An active membership has no end date: it lasts until a webhook ends it. The period end is kept so an overdue one can be noticed. A cancelled or paused one runs to the end of the paid period, then grace.
   const status = cancelled ? 'cancelling' : paused ? 'paused' : 'active';
   const paidUntil = status === 'active' ? periodEnd : periodEnd ?? toIso(d.canceled_at ?? d.cancelled_at) ?? new Date().toISOString();
   return {
@@ -63,6 +63,12 @@ export async function applyEvent(body, { store, sync, acceptTest, log = () => {}
   if (parsed.ignore) {
     log(`ignored: ${parsed.ignore}`);
     return parsed;
+  }
+  // A paid period that moves forward is proof Buy Me a Coffee sends renewal events (see bmc-overdue.mjs).
+  const before = store.membershipById?.(parsed.change.subscriptionId);
+  if (before?.paid_until && parsed.change.paidUntil && Date.parse(parsed.change.paidUntil) > Date.parse(before.paid_until)) {
+    parsed.renewed = true;
+    log(`renewal seen: ${parsed.type} moved a paid period forward, so BMC_LAPSE_WITHOUT_RENEWAL=on is safe to consider`);
   }
   store.upsertMembership(parsed.change);
   await sync.syncEmail(parsed.change.email, parsed.type);

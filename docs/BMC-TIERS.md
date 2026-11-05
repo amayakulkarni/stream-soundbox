@@ -33,7 +33,7 @@ Add this line to every tier: *After joining, press "Link my membership" in the M
 
 ## What happens with payments
 
-- **Active:** stays active until cancelled. If a webhook is lost or a card fails, the hourly check (`BMC_API_TOKEN`) catches it, so set that token.
+- **Active:** stays active until a cancellation webhook or a mod ends it. Buy Me a Coffee has no API for this bot to check, and no documented renewal event, so a missed cancellation won't end a tier by itself. When a paid period passes with no event for 3 days, the mods get one message in the mod log asking them to check the dashboard. See `BMC_LAPSE_WITHOUT_RENEWAL` in `.env` to end it automatically instead.
 - **Cancelled or paused:** the tier stays until the paid period ends, then for a 7-day grace period, with DM reminders. Renewing during grace keeps the tier with no second welcome.
 - **Lapsed:** tier and lounge roles go. A member who also has Visitor keeps the rest of the server. One who joined only by paying goes back to The Gate until they send an intro or renew.
 - **Refund or chargeback:** the Founder runs `/membership revoke`, which ends it at once with no grace.
