@@ -24,7 +24,9 @@ export function planRoles(template, tiers, env = {}) {
 }
 
 const VIEW = [P.ViewChannel, P.ReadMessageHistory];
-const TALK = [P.ViewChannel, P.ReadMessageHistory, P.SendMessages, P.AddReactions, P.EmbedLinks, P.AttachFiles, P.Connect, P.Speak, P.Stream, P.UseVAD];
+// Soundboard (including sounds from other servers) and Activities are allowed outright wherever people can talk.
+const FUN = [P.UseSoundboard, P.UseExternalSounds, P.UseEmbeddedActivities, P.UseExternalApps];
+const TALK = [P.ViewChannel, P.ReadMessageHistory, P.SendMessages, P.AddReactions, P.EmbedLinks, P.AttachFiles, P.Connect, P.Speak, P.Stream, P.UseVAD, ...FUN];
 // Helpers post the room's picture and notice in the voice chat, and set the status line, themselves.
 const AMBIENT = [P.ViewChannel, P.Connect, P.Speak, P.SendMessages, P.AttachFiles, P.ReadMessageHistory, P.SetVoiceChannelStatus];
 const NO_WRITE = [P.SendMessages, P.SendMessagesInThreads, P.CreatePublicThreads, P.CreatePrivateThreads, P.AddReactions];
@@ -130,7 +132,7 @@ export function planChannels(template, { roleIds, tiers }) {
   return out;
 }
 
-const VOICE_ONLY = new Set([P.Connect, P.Speak, P.Stream, P.UseVAD, P.SetVoiceChannelStatus]);
+const VOICE_ONLY = new Set([P.Connect, P.Speak, P.Stream, P.UseVAD, P.SetVoiceChannelStatus, P.UseSoundboard, P.UseExternalSounds]);
 const hasView = (o) => o.allow.includes(P.ViewChannel);
 
 /**

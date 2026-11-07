@@ -38,18 +38,22 @@ export function loadAmbienceConfig(file = process.env.AMBIENCE_CONFIG || path.jo
   try {
     raw = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));
   } catch (err) {
-    if (err.code !== 'ENOENT') throw new Error(`cannot read ${file}: ${err.message}`);
+    // A typo in the file must not stop the whole bot: ambience runs on its built-in rooms and says why.
+    if (err.code !== 'ENOENT') console.error(`[ambience] ignoring ${file} (using the built-in rooms): ${err.message}`);
   }
   const byKey = new Map(DEFAULT_ROOMS.map((r) => [r.key, { ...r }]));
   for (const r of raw.rooms || []) byKey.set(r.key, { ...(byKey.get(r.key) || { gainDb: 0, visual: null, match: [r.key] }), ...r });
   const flag = String(env.AMBIENCE ?? (raw.enabled === false ? 'off' : 'on')).toLowerCase();
+  // volumeDb turns every room up or down at once; a room's own gainDb is added on top. Negative is quieter.
+  const volumeDb = Number(raw.volumeDb ?? 0) || 0;
   return {
+    volumeDb,
     enabled: !['off', 'false', '0', 'no'].includes(flag),
     dir: env.AMBIENCE_DIR || raw.dir || path.join(ROOT, 'audio'), // your own music, as audio/<key>.mp3 or a folder audio/<key>/
     defaultsDir: path.join(ROOT, 'audio', 'generated'), // the loops scripts/generate-ambience.mjs makes
     visualsDir: path.join(ROOT, 'assets', 'visuals'), // optional: assets/visuals/<visual>.gif
     leaveDelayMs: Math.max(0, Number(env.AMBIENCE_LEAVE_DELAY ?? raw.leaveDelaySeconds ?? 20)) * 1000,
-    rooms: [...byKey.values()],
+    rooms: [...byKey.values()].map((r) => ({ ...r, gainDb: (Number(r.gainDb) || 0) + volumeDb })),
   };
 }
 

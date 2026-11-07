@@ -1,9 +1,20 @@
 {
-  "_readme": "Optional. Copy to config/ambience.json to add to or change the rooms in src/ambience.mjs. key: the sound. Your own music: audio/<key>.mp3, or a folder audio/<key>/ for a random track each time. match: words looked for in voice channel names. channelId: pin a room to a channel. status: the line under the channel name. visual and caption: assets/visuals/<visual>.gif posted in the room's chat. gainDb: louder or softer. AMBIENCE=off in .env turns everything off. A helper bot joins when the first person arrives and leaves leaveDelaySeconds after the last one goes.",
+  "_readme": "Ambience settings. Volume is in dB: -6 is about half as loud, -12 a quarter, +3 a little louder. Every track is first evened out to the same loudness, then volumeDb (all rooms) and the room's gainDb are added. A change here needs a restart: systemctl restart supporters. A swapped sound file needs none.",
   "enabled": true,
+  "_enabled": "false turns all ambience off (AMBIENCE=off in .env does the same and wins).",
+  "volumeDb": -6,
+  "_volumeDb": "Every room at once. 0 is the normal level.",
   "leaveDelaySeconds": 20,
+  "_leaveDelaySeconds": "How long a helper stays after the last person leaves.",
+  "_rooms": "One entry per room. key: the room's name and its sound file (audio/<key>.mp3, or a folder audio/<key>/ for a random track). match: words looked for in the voice channel's name, ignoring case, spaces and emoji. channelId: use exactly this channel instead (right-click the channel > Copy Channel ID). gainDb: this room only, added to volumeDb. status: the line under the channel name. visual and caption: a GIF from assets/visuals/<visual>.gif posted in the room's chat with this text, or null for none. To silence one room, delete its sound file or point it at no channel. To add a room, add an entry with a new key and put audio/<key>.mp3 in place.",
   "rooms": [
-    { "key": "the-lounge", "gainDb": 0 },
-    { "key": "the-lounge-example", "match": ["some other room"], "status": "🎶 your own room" }
+    { "key": "the-lounge", "match": ["the lounge"], "gainDb": 0, "status": "🛋️ low-pressure downtime", "visual": null, "caption": "🛋️ Pull up a chair." },
+    { "key": "build-room", "match": ["build room"], "gainDb": -2, "status": "🛠️ heads down, building", "visual": null, "caption": "🛠️ The bench is warm." },
+    { "key": "backstage", "match": ["backstage"], "gainDb": 0, "status": "🎬 behind the scenes", "visual": null, "caption": "🎬 Backstage is open." },
+    { "key": "core-room", "match": ["core room"], "gainDb": 0, "status": "💗 the magenta core hums", "visual": null, "caption": "💗 The core hums quietly." },
+    { "key": "elder-campfire", "match": ["elder campfire", "campfire"], "gainDb": 0, "status": "🔥 crackling fire", "visual": null, "caption": "🔥 A fire crackles in the forge." },
+    { "key": "elder-lounge", "match": ["elder lounge"], "gainDb": 0, "status": "🕯️ quiet company", "visual": null, "caption": "🕯️ Quiet company." },
+    { "key": "art-studio", "match": ["art studio"], "gainDb": 0, "status": "🎨 brushes moving", "visual": null, "caption": "🎨 Brushes moving." },
+    { "key": "writing-desk", "match": ["writing desk"], "gainDb": 0, "status": "✒️ pens scratching", "visual": null, "caption": "✒️ Pens scratching." }
   ]
 }

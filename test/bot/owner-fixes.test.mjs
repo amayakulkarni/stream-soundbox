@@ -63,3 +63,13 @@ test('the link email is branded, escapes input and keeps a plain-text copy', () 
   assert.match(m.text, /\/link code:123456/);
   assert.match(linkCodeEmail({ code: '1', brandColor: 'red;}<script>' }).html, /#ff267c/);
 });
+
+test('members may use the soundboard and Activities in every voice room they can join', () => {
+  const verified = roles.find((r) => r.key === 'verified');
+  for (const bit of [P.UseSoundboard, P.UseExternalSounds, P.UseEmbeddedActivities, P.UseExternalApps]) assert.ok(verified.permissions.includes(bit));
+  for (const c of channels.filter((x) => x.kind === 'voice' && x.access === 'verified')) {
+    const o = c.overwrites.find((x) => x.id === roleIds.verified);
+    assert.ok(o.allow.includes(P.UseSoundboard) && o.allow.includes(P.UseEmbeddedActivities), c.name);
+  }
+  for (const c of channels.filter((x) => x.kind === 'text')) for (const o of c.overwrites) assert.ok(!o.allow.includes(P.UseSoundboard), `${c.name} gets no voice-only bit`);
+});

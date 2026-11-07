@@ -31,7 +31,7 @@
     { "key": "team:tongs", "name": "Team Tongs", "color": "#4895ef", "team": { "key": "tongs", "name": "Tongs", "emoji": "🗜️" } },
     { "key": "team:bellows", "name": "Team Bellows", "color": "#2a9d8f", "team": { "key": "bellows", "name": "Bellows", "emoji": "💨" } },
     { "key": "team:rust", "name": "Team Rust", "color": "#bc6c25", "team": { "key": "rust", "name": "Rust", "emoji": "🦠" } },
-    { "key": "verified", "name": "Forged", "permissions": ["ViewChannel", "SendMessages", "ReadMessageHistory", "AddReactions", "EmbedLinks", "AttachFiles", "UseExternalEmojis", "UseApplicationCommands", "CreatePublicThreads", "SendMessagesInThreads", "Connect", "Speak", "Stream", "UseVAD", "ChangeNickname"] },
+    { "key": "verified", "name": "Forged", "permissions": ["ViewChannel", "SendMessages", "ReadMessageHistory", "AddReactions", "EmbedLinks", "AttachFiles", "UseExternalEmojis", "UseApplicationCommands", "CreatePublicThreads", "SendMessagesInThreads", "Connect", "Speak", "Stream", "UseVAD", "ChangeNickname", "UseSoundboard", "UseExternalSounds", "UseEmbeddedActivities", "UseExternalApps"] },
     { "key": "ambience", "name": "Forge Ambience", "permissions": ["ViewChannel", "Connect", "Speak", "SendMessages", "AttachFiles", "ReadMessageHistory", "SetVoiceChannelStatus"] }
   ],
   "categories": [

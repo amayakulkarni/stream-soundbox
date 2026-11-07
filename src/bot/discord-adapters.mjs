@@ -143,7 +143,7 @@ export function createLeagueAdapter({ client, guild, cfg, store }) {
           permissionOverwrites: [
             { id: guild.roles.everyone.id, deny: [P.ViewChannel], type: OverwriteType.Role },
             ...(cfg.roles?.verified ? [{ id: cfg.roles.verified, deny: [P.ViewChannel], type: OverwriteType.Role }] : []),
-            ...[...teamRoleIds, ...crewRoleIds].map((id) => ({ id, allow: [P.ViewChannel, P.Connect, P.Speak, P.Stream, P.SendMessages, P.ReadMessageHistory], type: OverwriteType.Role })),
+            ...[...teamRoleIds, ...crewRoleIds].map((id) => ({ id, allow: [P.ViewChannel, P.Connect, P.Speak, P.Stream, P.SendMessages, P.ReadMessageHistory, P.UseSoundboard, P.UseExternalSounds, P.UseEmbeddedActivities, P.UseExternalApps], type: OverwriteType.Role })),
           ],
           reason: 'League match room',
         })

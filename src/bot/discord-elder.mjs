@@ -4,7 +4,7 @@ import { ChannelType, PermissionFlagsBits as P } from 'discord.js';
 export function createElderAdapter({ getClient, getGuild, cfg }) {
   const guild = () => getGuild();
   const ch = (id) => guild().channels.cache.get(id);
-  const view = [P.ViewChannel, P.Connect, P.Speak, P.Stream, P.UseVAD, P.SendMessages, P.ReadMessageHistory];
+  const view = [P.ViewChannel, P.Connect, P.Speak, P.Stream, P.UseVAD, P.SendMessages, P.ReadMessageHistory, P.UseSoundboard, P.UseExternalSounds, P.UseEmbeddedActivities, P.UseExternalApps];
   return {
     async createRoom({ ownerId, name }) {
       const created = await guild().channels.create({
