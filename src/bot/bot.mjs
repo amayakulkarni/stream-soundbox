@@ -1,7 +1,7 @@
 // Snitch for Magenta Forge. startBot() starts every feature and wires Discord events to the rule modules.
 // Import it from a bigger app, or run src/index.mjs on its own. See README.md, "Using the bot inside another app".
 import path from 'node:path';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, Client, GatewayIntentBits, Partials, StringSelectMenuBuilder, ActivityType } from 'discord.js';
+import { ActionRowBuilder, AuditLogEvent, ButtonBuilder, ButtonStyle, ChannelType, Client, GatewayIntentBits, Partials, StringSelectMenuBuilder, ActivityType } from 'discord.js';
 import { createActivity } from './activity.mjs';
 import { createAmbience, loadAmbienceConfig, matchRooms } from './ambience.mjs';
 import { createVoiceEntry, humansInChannel, setStatus, startHelperClients, voiceChannels } from './ambience-voice.mjs';
@@ -12,6 +12,8 @@ import { loadConfig, readEnv, ROOT } from './config.mjs';
 import { createDiscordCore, createIntroAdapter, createLeagueAdapter, createMirrorAdapter, createProductivityAdapter, createTicketAdapter, mirrorSource, row, upsertPanel } from './discord-adapters.mjs';
 import { createElderAdapter } from './discord-elder.mjs';
 import { createElderRooms } from './elder-rooms.mjs';
+import { linkCodeEmail } from './email.mjs';
+import { judgeGrandElderChange } from './grand-elder.mjs';
 import { pickerOptions } from './hobbies.mjs';
 import { createInteractionRouter } from './interactions.mjs';
 import { createIntro } from './intro.mjs';
@@ -103,7 +105,7 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
     sync,
     lx: {
       smtpOn: Boolean(transporter),
-      sendCode: (email, code) => transporter.sendMail({ from: env.smtp.from || env.smtp.user, to: email, subject: 'Your Magenta Forge link code', text: `Your code is ${code}. It works for 15 minutes.\n\nIn the Magenta Forge server, run: /link code:${code}\n\nIf you did not ask for this, ignore this email.` }),
+      sendCode: (email, code) => transporter.sendMail({ from: env.smtp.from || env.smtp.user, to: email, ...linkCodeEmail({ code, brandColor: env.brandColor, links: env }) }),
       reviewRequest: ({ id, userId, maskedEmail, levelName, supporterName }) =>
         core.post(cfg.channels.modLog, `🔗 <@${userId}> asks to link a membership.\nEmail: ${maskedEmail}\nLevel: ${levelName ?? 'unknown'}\nSupporter name: ${supporterName ?? 'unknown'}\nCheck them against the Buy Me a Coffee dashboard, or ask in a ticket before approving.`, {
           components: [row(new ButtonBuilder().setCustomId(`link:approve:${id}`).setLabel('Approve').setStyle(ButtonStyle.Success), new ButtonBuilder().setCustomId(`link:decline:${id}`).setLabel('Decline').setStyle(ButtonStyle.Danger))],
@@ -265,7 +267,27 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
     if (is > Date.now() && is !== was) store.strikeAdd(after.id, 'timeout'); // a moderation action, for the Elder rule
     const needsVerified = [...(cfg.staffRoleIds ?? []), cfg.roles?.grandElder, cfg.league?.commissionerRoleId].some((id) => id && after.roles.cache.has(id));
     if (needsVerified && cfg.roles?.verified && !after.roles.cache.has(cfg.roles.verified)) await after.roles.add(cfg.roles.verified, 'Holds a role given by an admin').catch((err) => log('verified role:', err.message));
+    await guardGrandElder(before, after).catch((err) => log('Grand Elder check:', err.message));
   });
+
+  // Only the server owner gives or takes Grand Elder. Anyone else's change is undone and reported in #mod-log.
+  async function guardGrandElder(before, after) {
+    const roleId = cfg.roles?.grandElder;
+    if (!roleId || before.partial) return;
+    const had = before.roles.cache.has(roleId);
+    const has = after.roles.cache.has(roleId);
+    if (had === has) return;
+    await new Promise((r) => setTimeout(r, 1500)); // the audit log entry can arrive a moment after the change
+    const logs = await guild.fetchAuditLogs({ type: AuditLogEvent.MemberRoleUpdate, limit: 10 });
+    const key = has ? '$add' : '$remove';
+    const entry = logs.entries.find((e) => e.targetId === after.id && Date.now() - e.createdTimestamp < 30_000 && e.changes.some((c) => c.key === key && c.new?.some?.((r) => r.id === roleId)));
+    const verdict = judgeGrandElderChange({ executorId: entry?.executorId ?? null, ownerId: guild.ownerId, botId: client.user.id });
+    if (verdict === 'allow') return;
+    if (verdict === 'unknown') return void core.modLog(`⚠️ Grand Elder was ${has ? 'given to' : 'taken from'} <@${after.id}>, and the audit log does not say by whom. Only the owner should change it.`).catch(() => {});
+    if (has) await after.roles.remove(roleId, 'Only the server owner gives Grand Elder');
+    else await after.roles.add(roleId, 'Only the server owner takes Grand Elder away');
+    core.modLog(`🛡️ <@${entry.executorId}> ${has ? 'gave' : 'took'} Grand Elder ${has ? 'to' : 'from'} <@${after.id}>. Only the owner can do that, so it was undone.`).catch(() => {});
+  }
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
     if (newState.guild.id !== cfg.guildId) return;

@@ -192,9 +192,9 @@ export function openStore(dbPath) {
            started_at = COALESCE(excluded.started_at, started_at), paid_until = COALESCE(excluded.paid_until, paid_until),
            cancel_at = excluded.cancel_at, ended_at = excluded.ended_at, updated_at = excluded.updated_at`,
       ).run({ subscriptionId, email, supporterName: supporterName ?? null, levelId: levelId ?? null, levelName: levelName ?? null, status, startedAt: startedAt ?? null, paidUntil: paidUntil ?? null, cancelAt: cancelAt ?? null, endedAt: endedAt ?? null, now: nowIso() }),
-    linkStart: (discordId, email, codeHash, expiresAt) => {
+    linkStart: (discordId, email, codeHash, expiresAt, createdAt = nowIso()) => {
       db.prepare('DELETE FROM discord_link_codes WHERE discord_id = ?').run(discordId);
-      return Number(db.prepare('INSERT INTO discord_link_codes (discord_id, email, code_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)').run(discordId, email, codeHash ?? null, expiresAt, nowIso()).lastInsertRowid);
+      return Number(db.prepare('INSERT INTO discord_link_codes (discord_id, email, code_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)').run(discordId, email, codeHash ?? null, expiresAt, createdAt).lastInsertRowid);
     },
     linkPending: (discordId) => db.prepare('SELECT * FROM discord_link_codes WHERE discord_id = ? ORDER BY id DESC').get(discordId) ?? null,
     linkById: (id) => db.prepare('SELECT * FROM discord_link_codes WHERE id = ?').get(id) ?? null,

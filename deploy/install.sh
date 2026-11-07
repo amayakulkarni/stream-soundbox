@@ -11,11 +11,14 @@
 #
 #   sudo ./deploy/install.sh rollback
 #       Put the most recent backup back.
+#
+#   sudo ./deploy/install.sh permissions
+#       Make files you copied in by hand (sounds, GIFs, config) readable by the app again, then restart it.
 set -euo pipefail
 
 MODE="install"
 case "${1:-}" in
-  update|rollback) MODE="$1"; shift ;;
+  update|rollback|permissions) MODE="$1"; shift ;;
 esac
 
 DOMAIN=""
@@ -43,6 +46,20 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 say() { printf '\n\033[1;35m==>\033[0m %s\n' "$*"; }
 die() { printf '\033[1;31mError:\033[0m %s\n' "$*" >&2; exit 1; }
+
+# The code is root's and readable by the app's group. Sounds, GIFs and config are often copied in by hand with
+# root-only modes (for example root:root 660), which leaves voice rooms silent, so they get group read too.
+fix_permissions() {
+  chown -R root:"$APP_USER" "$APP_DIR"
+  local dir
+  for dir in config audio assets; do
+    if [[ -e "$APP_DIR/$dir" ]]; then chmod -R g+rX "$APP_DIR/$dir"; fi
+  done
+  chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data"
+  chmod 750 "$APP_DIR"
+  if [[ -f "$APP_DIR/.env" ]]; then chmod 640 "$APP_DIR/.env"; fi
+  chmod 700 "$APP_DIR/data"
+}
 
 env_get() { grep -E "^$1=" "$APP_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2- || true; }
 
@@ -74,8 +91,7 @@ restore_backup() {
   for item in "${APP_ITEMS[@]}"; do rm -rf "${APP_DIR:?}/$item"; done
   tar -xzf "$file" -C "$APP_DIR"
   install_packages || true
-  chown -R root:"$APP_USER" "$APP_DIR"
-  chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data"
+  fix_permissions
   systemctl restart supporters
 }
 
@@ -127,11 +143,7 @@ sync_files() {
     cp -a "$SRC/$item" "$APP_DIR/$item"
   done
   sync_extras
-  chown -R root:"$APP_USER" "$APP_DIR"
-  chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data"
-  chmod 750 "$APP_DIR"
-  [[ -f "$APP_DIR/.env" ]] && chmod 640 "$APP_DIR/.env"
-  chmod 700 "$APP_DIR/data"
+  fix_permissions
 }
 
 refresh_service_and_nginx() {
@@ -153,6 +165,15 @@ NODE_BIN="$(command -v node)"
 (( $(node -p 'process.versions.node.split(".")[0]') >= 22 )) || echo "Warning: this is Node $(node -v). The overlay will run, but the Discord bot needs Node 22 or newer and will not start until you upgrade." >&2
 command -v npm >/dev/null || { echo "npm is required for the Discord bot's packages. Install it and re-run." >&2; exit 1; }
 
+
+# ── permissions ──
+if [[ "$MODE" == "permissions" ]]; then
+  [[ -d "$APP_DIR" ]] || die "$APP_DIR is not installed yet."
+  fix_permissions
+  systemctl restart supporters
+  say "Permissions fixed and the app restarted."
+  exit 0
+fi
 
 # ── rollback ──
 if [[ "$MODE" == "rollback" ]]; then
@@ -193,8 +214,7 @@ if [[ "$MODE" == "update" ]]; then
   PACKAGES_OK=1
   say "Installing packages"
   install_packages || PACKAGES_OK=0
-  chown -R root:"$APP_USER" "$APP_DIR"
-  chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data"
+  fix_permissions
   systemctl restart supporters
   if [[ $PACKAGES_OK -eq 1 ]] && health_check; then
     say "Updated. The app is answering."
@@ -246,11 +266,7 @@ if [[ ! -f "$APP_DIR/.env" ]]; then
   set_env BMC_WEBHOOK_TOKEN "$(openssl rand -hex 20)"
   set_env PUBLIC_URL "https://$DOMAIN"
 fi
-chown -R root:"$APP_USER" "$APP_DIR"
-chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data"
-chmod 750 "$APP_DIR"
-chmod 640 "$APP_DIR/.env"
-chmod 700 "$APP_DIR/data"
+fix_permissions
 
 # ── systemd ──
 say "Installing the systemd service"

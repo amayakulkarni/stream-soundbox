@@ -89,7 +89,8 @@ export function overwritesFor(access, ch, { roleIds, tiers, staffTalks = true })
   }
   if (access.startsWith('tier:')) {
     const from = Number(access.slice(5));
-    privateTo(tiers.filter((t) => t.n >= from).map((t) => `access:${t.n}`));
+    // Grand Elders (Amaya's friends) see every paid channel, whatever tier they hold.
+    privateTo([...tiers.filter((t) => t.n >= from).map((t) => `access:${t.n}`), 'grandElder']);
     return list;
   }
   if (access.startsWith('role:')) {
@@ -187,7 +188,7 @@ export function buildIds({ guildId, roleIds, channelIds, template, tiers }) {
     elder: {
       ...template.elder,
       roleId: roleOf('elder'),
-      grandElderRoleId: roleOf('grandElder'), // the bot never gives or removes this: admins give it by hand
+      grandElderRoleId: roleOf('grandElder'), // the bot never gives or removes this: only the server owner does
       lobbyChannelId: ch('elderLobby'),
       categoryId: ch('elderCategory'),
       creatorRoleIds: [roleOf('elder'), roleOf('grandElder'), roleOf('founder'), roleOf('representative'), roleOf('warden')],

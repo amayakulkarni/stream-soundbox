@@ -7,6 +7,21 @@ import fs from 'node:fs';
 import { AttachmentBuilder, ChannelType, Client, Events, GatewayIntentBits } from 'discord.js';
 
 /** One loop of the file, forever, as Ogg Opus (so Discord needs no extra encoder in Node). */
+/**
+ * What to do after ffmpeg ends. state = { fails }, kept between runs; run = { code, ranMs }.
+ * A clean end, or a run that lasted a while, plays again at once. Each quick failure in a row waits twice as long
+ * (1, 2, 4, 8 s, up to 60 s). After GIVE_UP_AFTER of them the room is handed back, so ambience.mjs backs off too.
+ */
+export const QUICK_FAIL_MS = 2000;
+export const GIVE_UP_AFTER = 5;
+export function nextRun(state, { code, ranMs }) {
+  const failed = code !== 0 && ranMs < QUICK_FAIL_MS;
+  state.fails = failed ? state.fails + 1 : 0;
+  if (!failed) return { action: 'play', delayMs: 0 };
+  if (state.fails >= GIVE_UP_AFTER) return { action: 'give-up', delayMs: 0 };
+  return { action: 'wait', delayMs: Math.min(60_000, 1000 * 2 ** (state.fails - 1)) };
+}
+
 export function ffmpegArgs(file, gainDb = 0, trimDb = 0) {
   const gain = (Number(gainDb) || 0) + (Number(trimDb) || 0);
   return [
@@ -86,24 +101,56 @@ export function createVoiceEntry({ name, getClient, guildId, env = process.env, 
       let noticePost = null;
       let statusSet = false;
 
+      const runs = { fails: 0 };
+      let retry = null;
+      let run = null; // the current ffmpeg: { startedAt, ended: Promise<exit code>, why() }
+
       const playOnce = () => {
         if (stopped) return;
-        ff = spawn(ffmpeg, ffmpegArgs(assets.track.path, room.gainDb, env.AMBIENCE_TRIM_DB), { stdio: ['ignore', 'pipe', 'pipe'] });
+        const proc = spawn(ffmpeg, ffmpegArgs(assets.track.path, room.gainDb, env.AMBIENCE_TRIM_DB), { stdio: ['ignore', 'pipe', 'pipe'] });
+        ff = proc;
         let err = '';
-        ff.stderr.on('data', (d) => (err = (err + d).slice(-400)));
+        proc.stderr.on('data', (d) => (err = (err + d).slice(-400)));
         // Stopping ffmpeg closes its pipes; without these listeners that "error" event would crash the whole bot.
-        ff.stdout.on('error', () => {});
-        ff.stderr.on('error', () => {});
-        ff.on('error', (e) => log(`[ambience] ffmpeg could not start (${e.message}). Install ffmpeg or run npm install.`));
-        ff.on('close', (code) => {
-          if (!stopped && code) log(`[ambience] ffmpeg stopped (${code}): ${err.trim()}`);
+        proc.stdout.on('error', () => {});
+        proc.stderr.on('error', () => {});
+        const current = { startedAt: Date.now(), why: () => err.trim() };
+        current.ended = new Promise((resolve) => {
+          proc.on('error', (e) => {
+            err = `could not start ffmpeg (${e.message}). Install ffmpeg or run npm install`;
+            resolve(-1);
+          });
+          proc.on('close', (code, signal) => resolve(code ?? (signal ? 0 : -1)));
         });
-        player.play(voice.createAudioResource(ff.stdout, { inputType: voice.StreamType.OggOpus }));
+        run = current;
+        player.play(voice.createAudioResource(proc.stdout, { inputType: voice.StreamType.OggOpus }));
+      };
+
+      // The track ended or failed: once ffmpeg has finished, play again, wait, or give the room up. Logged once per streak.
+      const afterRun = async () => {
+        const current = run;
+        if (stopped || !current) return;
+        const code = await current.ended;
+        if (stopped || run !== current || retry) return;
+        const next = nextRun(runs, { code, ranMs: Date.now() - current.startedAt });
+        if (next.action === 'play') return playOnce();
+        if (runs.fails === 1) log(`[ambience] ${name} in ${ch.name}: ffmpeg failed (${code}): ${current.why() || 'no message'}. Retrying with growing waits.`);
+        if (next.action === 'wait') {
+          retry = setTimeout(() => {
+            retry = null;
+            playOnce();
+          }, next.delayMs);
+          return;
+        }
+        log(`[ambience] ${name} in ${ch.name}: ffmpeg failed ${runs.fails} times in a row, so it leaves the room for now.`);
+        await stop();
+        onLost();
       };
 
       const stop = async () => {
         if (stopped) return;
         stopped = true;
+        if (retry) clearTimeout(retry);
         try { ff?.kill('SIGKILL'); } catch {}
         try { player.stop(true); } catch {}
         if (noticePost) await noticePost.delete().catch(() => {});
@@ -119,7 +166,9 @@ export function createVoiceEntry({ name, getClient, guildId, env = process.env, 
           await me.voice.setSuppressed(false).catch(() => me.voice.setRequestToSpeak(true).catch(() => {}));
         }
         conn.subscribe(player);
-        player.on(voice.AudioPlayerStatus.Idle, () => playOnce());
+        player.on(voice.AudioPlayerStatus.Idle, () => {
+          afterRun().catch((e) => log(`[ambience] restart failed: ${e.message}`));
+        });
         player.on('error', (e) => log(`[ambience] player error: ${e.message}`));
         playOnce();
       } catch (e) {

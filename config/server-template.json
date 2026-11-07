@@ -2,11 +2,11 @@
   "_readme": "The Magenta Forge layout. `npm run setup` shows what would change; `npm run setup:apply` makes it so and writes the IDs to config/discord-tiers.json. Run it again any time: nothing is duplicated. Access rules: gate (only people not yet verified), verified (every verified member), readonly (verified members read, staff write), staff, tier:<slug> (that tier and higher), role:<key> (that role and staff), league (Esports League role, teams, commissioners, staff). ambience:true lets the helper bots join a private voice room.",
   "guildName": "Magenta Forge",
   "roles": [
+    { "key": "grandElder", "name": "Grand Elder", "color": "#ffd166", "_note": "Top of the list on purpose: only the server owner can give or take it. Opens every paid channel and the Elder Hall." },
     { "key": "founder", "name": "Forge Founder", "color": "#ff267c", "permissions": ["ManageGuild", "ManageRoles", "ManageChannels", "ManageEvents", "ManageMessages", "ManageThreads", "ManageNicknames", "ModerateMembers", "KickMembers", "BanMembers", "MuteMembers", "MoveMembers", "DeafenMembers", "ViewAuditLog", "MentionEveryone"], "staff": 0 },
     { "key": "representative", "name": "Community Rep", "color": "#ff5c9d", "permissions": ["ManageEvents", "ManageThreads", "ViewAuditLog"], "staff": 1 },
     { "key": "warden", "name": "Forge Warden", "color": "#ff8ab8", "permissions": ["ModerateMembers", "KickMembers", "BanMembers", "ManageMessages", "ManageThreads", "MuteMembers", "MoveMembers", "DeafenMembers", "ViewAuditLog", "ManageEvents"], "staff": 2 },
     { "key": "commissioner", "name": "League Commissioner", "color": "#c77dff", "permissions": ["ManageEvents"] },
-    { "key": "grandElder", "name": "Grand Elder", "color": "#ffd166" },
     { "key": "elder", "name": "Forge Elder", "color": "#f4a261" },
     { "tier": 5, "color": "#ff267c" },
     { "tier": 4, "color": "#9b5de5" },
@@ -59,7 +59,8 @@
         { "key": "viceCity", "name": "vice-city-grind", "topic": "Open-world gaming, GTA Online heists and upcoming GTA 6 sessions." },
         { "key": "nightCity", "name": "night-city-chat", "topic": "Cyberpunk 2077 gameplay, mods and cyberpunk aesthetic discussions." },
         { "key": "workbench", "name": "maker-workbench", "topic": "Show off 3D printed lithophanes, Node.js bridges and custom homelab routing setups." },
-        { "key": "streamLive", "name": "stream-live", "topic": "Chat with Twitch and YouTube viewers while Amaya is live." }
+        { "key": "streamLive", "name": "stream-live", "topic": "Chat with Twitch and YouTube viewers while Amaya is live." },
+        { "key": "botSpam", "name": "bot-spam", "topic": "Run Snitch's commands here: /rank, /todo, /membership status, /socials and the rest. Keeps the other channels tidy." }
       ]
     },
     {

@@ -100,7 +100,7 @@ let child;
 function startServer() {
   child = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
     env: {
-      ...process.env, PORT: String(PORT), HOST: '127.0.0.1', DATA_DIR, PUBLIC_URL: 'https://supporters.test',
+      ...process.env, SNITCH_BOT_TOKEN: '', PORT: String(PORT), HOST: '127.0.0.1', DATA_DIR, PUBLIC_URL: 'https://supporters.test',
       ADMIN_PASSWORD: 'pw-for-tests', SESSION_SECRET: 'x'.repeat(48), OVERLAY_KEY: KEY,
       YOUTUBE_CLIENT_ID: 'ycid', YOUTUBE_CLIENT_SECRET: 'ysec', YOUTUBE_API_BASE: `http://127.0.0.1:${MOCK}/yt`,
       GOOGLE_TOKEN_URL: `http://127.0.0.1:${MOCK}/google/token`,

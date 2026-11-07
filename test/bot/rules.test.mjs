@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import test from 'node:test';
 import { createAmbience, loadAmbienceConfig, matchRooms, normalizeName } from '../../src/bot/ambience.mjs';
 import { checkOverdue } from '../../src/bot/bmc-overdue.mjs';
+import { nextRun } from '../../src/bot/ambience-voice.mjs';
 import { createActivity } from '../../src/bot/activity.mjs';
 import { applyEvent, parseEvent, verifySignature, toIso } from '../../src/bot/bmc.mjs';
 import { elderProgress, entitlement, isElder, roleDiff, tierForLevel, wantedRoles } from '../../src/bot/core.mjs';
@@ -551,4 +552,19 @@ test('webhook over real HTTP: refuses a bad signature, applies a good one', asyn
   assert.ok(discord.roles.get('u1').has('a1'));
   server.close();
   store.close();
+});
+
+test('ffmpeg that keeps failing backs off, then gives the room up, instead of respawning several times a second', () => {
+  const s = { fails: 0 };
+  const quick = { code: 1, ranMs: 50 };
+  assert.deepEqual(nextRun(s, quick), { action: 'wait', delayMs: 1000 });
+  assert.deepEqual(nextRun(s, quick), { action: 'wait', delayMs: 2000 });
+  assert.deepEqual(nextRun(s, quick), { action: 'wait', delayMs: 4000 });
+  assert.deepEqual(nextRun(s, quick), { action: 'wait', delayMs: 8000 });
+  assert.deepEqual(nextRun(s, quick), { action: 'give-up', delayMs: 0 });
+  const t = { fails: 3 };
+  assert.deepEqual(nextRun(t, { code: 0, ranMs: 120_000 }), { action: 'play', delayMs: 0 }, 'a track that played through loops at once');
+  assert.equal(t.fails, 0, 'and the streak starts again');
+  assert.deepEqual(nextRun(t, { code: 1, ranMs: 90_000 }), { action: 'play', delayMs: 0 }, 'a failure after a long run is not a quick failure');
+  assert.equal(nextRun({ fails: 0 }, { code: -1, ranMs: 5 }).action, 'wait', 'ffmpeg that cannot start counts too');
 });

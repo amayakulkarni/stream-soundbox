@@ -16,7 +16,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function run(flags) {
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
-    env: { ...process.env, PORT: String(PORT), HOST: '127.0.0.1', DATA_DIR, ADMIN_PASSWORD: 'pw', SESSION_SECRET: 'x'.repeat(48), ...flags },
+    env: { ...process.env, SNITCH_BOT_TOKEN: '', PORT: String(PORT), HOST: '127.0.0.1', DATA_DIR, ADMIN_PASSWORD: 'pw', SESSION_SECRET: 'x'.repeat(48), ...flags },
     stdio: 'ignore',
   });
   for (let i = 0; i < 50; i++) { try { if ((await fetch(`${BASE}/healthz`)).ok) break; } catch { /* wait */ } await sleep(100); }

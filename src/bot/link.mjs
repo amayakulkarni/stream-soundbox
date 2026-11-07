@@ -28,11 +28,11 @@ export function createLink({ cfg, store, sync, lx, now = () => Date.now(), makeC
     const expires = new Date(now() + LINK_TTL_MS).toISOString();
     if (lx.smtpOn) {
       const code = makeCode();
-      store.linkStart(userId, addr, hash(code), expires);
+      store.linkStart(userId, addr, hash(code), expires, new Date(now()).toISOString());
       await lx.sendCode(addr, code).catch((err) => console.error('[bot] link email failed:', err.message));
       return 'A code is on its way to that address. Run `/link code:123456` with it within 15 minutes. No email after a few minutes? Check spam.';
     }
-    const id = store.linkStart(userId, addr, null, new Date(now() + 7 * 86_400_000).toISOString());
+    const id = store.linkStart(userId, addr, null, new Date(now() + 7 * 86_400_000).toISOString(), new Date(now()).toISOString());
     await lx.reviewRequest({ id, userId, maskedEmail: maskEmail(addr), levelName: membership?.level_name, supporterName: membership?.supporter_name });
     return 'A mod will check it and you will get a DM when it is linked.';
   }

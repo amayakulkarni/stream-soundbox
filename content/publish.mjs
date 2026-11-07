@@ -14,8 +14,11 @@
 // Needs Node 20.12 or newer. No packages to install.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath decodes %20, so folders with spaces ("Amaya Kulkarni") work on Windows.
+const self = fileURLToPath(import.meta.url);
+const here = path.dirname(self);
 // The bot's own .env (one folder up) holds the token, links and tier names.
 for (const file of [process.env.BOT_ENV_FILE, '.env.local', '.env', path.join(here, '..', '.env')].filter(Boolean)) {
   try { process.loadEnvFile(file); } catch {}
@@ -27,8 +30,11 @@ const repost = args.includes('--repost');
 const only = args.flatMap((a, i) => (a === '--only' ? [args[i + 1]] : []));
 const contentDir = path.resolve(process.env.CONTENT_DIR || path.join(here, 'posts'));
 const stateFile = path.resolve(process.env.PUBLISH_STATE_FILE || path.join(here, '.publish-state.json'));
-const token = process.env.SNITCH_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN || '';
-const guildId = process.env.DISCORD_GUILD_ID || '';
+// Values still set to an .env.example placeholder (PUT_..._HERE) count as empty.
+const val = (k) => { const v = String(process.env[k] ?? '').trim(); return /^PUT_[A-Z0-9_]*HERE$/.test(v) ? '' : v; };
+const token = val('SNITCH_BOT_TOKEN') || val('DISCORD_BOT_TOKEN');
+const guildId = val('DISCORD_GUILD_ID');
+if (guildId && !/^\d{17,20}$/.test(guildId)) { console.error(`DISCORD_GUILD_ID in .env is not a server ID (got "${guildId}"). Right-click the server in Discord → Copy Server ID.`); process.exit(1); }
 const color = parseInt(String(process.env.BRAND_COLOR || '#ff267c').replace('#', ''), 16);
 const footer = process.env.SERVER_NAME || 'Magenta Forge';
 const API = 'https://discord.com/api/v10';
@@ -97,7 +103,7 @@ async function main() {
 
   let channels = [];
   if (token && guildId) channels = await api('GET', `/guilds/${guildId}/channels`);
-  else if (live) throw new Error('Set SNITCH_BOT_TOKEN and DISCORD_GUILD_ID to publish.');
+  else if (live) throw new Error(`Cannot publish: ${!token ? 'SNITCH_BOT_TOKEN (or DISCORD_BOT_TOKEN)' : 'DISCORD_GUILD_ID'} is empty or still a placeholder in .env. Nothing was posted.`);
   for (const d of docs) {
     // channelId (comma-separated IDs) picks exact channels; otherwise every channel with the name gets the post,
     // (gate-* copies have other names and are filled by the bot's mirror, not here).
@@ -146,6 +152,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
+const same = (a, b) => (process.platform === 'win32' ? (x) => x.toLowerCase() : (x) => x)(path.resolve(a)) === (process.platform === 'win32' ? (x) => x.toLowerCase() : (x) => x)(path.resolve(b));
+if (process.argv[1] && same(process.argv[1], self)) {
   main().catch((e) => { console.error(e.message); process.exit(1); });
 }

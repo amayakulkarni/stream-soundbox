@@ -99,6 +99,7 @@ function startServer() {
   const env = {
     ...process.env,
     PORT: String(PORT),
+    SNITCH_BOT_TOKEN: '', // never the real bot from a local .env: a second copy would answer on Discord too
     HOST: '127.0.0.1',
     DATA_DIR,
     PUBLIC_URL: 'https://supporters.test',
