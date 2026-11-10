@@ -216,6 +216,26 @@ export function createInteractionRouter(app) {
 
     room: async (ix) => elderRooms.command({ sub: ix.options.getSubcommand(), userId: ix.user.id, roleIds: rolesOf(ix), target: ix.options.getUser('member')?.id ?? null, name: ix.options.getString('name'), limit: ix.options.getInteger('people') }),
 
+    camp: async (ix) => {
+      // "Until I issue /camp stop": only the server owner (and the Forge Founder role) runs the camp.
+      if (ix.user.id !== guild.ownerId && !isFounder(ix)) return 'Only the server owner can start or stop the camp.';
+      if (!ambience) return 'Ambient sound is off (AMBIENCE=off, or the voice libraries failed to load; see the bot log).';
+      const channelId = app.campChannelId();
+      if (!channelId) return 'There is no Elder Campfire voice channel with a sound, so there is nothing to light.';
+      const sub = ix.options.getSubcommand();
+      if (sub === 'status') return ambience.isHeld(channelId) ? `🔥 The camp is running in <#${channelId}>. /camp stop puts it out.` : 'The camp is not running. /camp start lights it.';
+      if (sub === 'start') {
+        store.leagueStateSet('ambience:camp', '1');
+        const state = ambience.hold(channelId);
+        log(`camp started by ${ix.user.id}`);
+        return state === 'playing' ? `🔥 Camp started: a helper is in <#${channelId}> and stays until /camp stop, even when it is empty.` : state === 'waiting' ? `🔥 Camp started. Every helper is busy right now, so one joins <#${channelId}> as soon as it is free, and then stays.` : `Camp started, but no helper could join yet (no free helper, or no sound file for elder-campfire). It keeps trying.`;
+      }
+      store.leagueStateSet('ambience:camp', '');
+      const was = ambience.unhold(channelId);
+      log(`camp stopped by ${ix.user.id}`);
+      return was ? 'Camp stopped. The helper leaves once nobody is in the room.' : 'The camp was not running.';
+    },
+
     ambience: async (ix) => {
       if (!isMod(cfg, rolesOf(ix))) return 'Only mods can use this.';
       return ambience ? ambience.describe() : 'Ambient sound is off (AMBIENCE=off, or the voice libraries failed to load; see the bot log).';

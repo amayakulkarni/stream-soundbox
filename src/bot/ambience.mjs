@@ -116,6 +116,9 @@ export function createAmbience({ config, notice = () => null, pool, humansIn, ch
   // Rooms called in for a while by another feature (a Pomodoro session): channelId → room key. They play
   // that room's sound but leave the channel status and the public notice to the feature that called them.
   const summoned = new Map();
+  // Rooms held open on purpose (/camp start): a helper stays and plays even with nobody there, until released.
+  const held = new Set();
+  const present = (channelId) => humansIn(channelId) + (held.has(channelId) ? 1 : 0);
   const matches = () => {
     const list = channels();
     const found = matchRooms(config.rooms, list);
@@ -141,7 +144,7 @@ export function createAmbience({ config, notice = () => null, pool, humansIn, ch
     const s = sessions.get(channelId);
     if (!s) return;
     s.timer = null;
-    if (humansIn(channelId) > 0) return;
+    if (present(channelId) > 0) return;
     try {
       await s.handle?.stop();
     } catch (err) {
@@ -165,7 +168,7 @@ export function createAmbience({ config, notice = () => null, pool, humansIn, ch
       return;
     }
     if (!config.enabled) return;
-    const people = humansIn(channelId);
+    const people = present(channelId);
     const s = sessions.get(channelId);
     if (people > 0) {
       if (s) {
@@ -206,7 +209,7 @@ export function createAmbience({ config, notice = () => null, pool, humansIn, ch
           session.state = 'playing';
           setTimer(() => { if (sessions.get(channelId) === session) lostCount.delete(channelId); }, 120_000)?.unref?.();
           log(`${room.channel.name}: ${entry.name} is playing ${assets.track.source === 'yours' ? 'your' : 'the built-in'} ${room.key} loop`);
-          if (humansIn(channelId) === 0 || !matches().has(channelId)) evaluate(channelId);
+          if (present(channelId) === 0 || !matches().has(channelId)) evaluate(channelId);
         })
         .catch((err) => {
           log(`${room.channel.name}: could not start (${err.message})`);
@@ -280,5 +283,20 @@ export function createAmbience({ config, notice = () => null, pool, humansIn, ch
     return lines.join('\n').slice(0, 1900);
   }
 
-  return { evaluate, scan, stopAll, describe, summon, release, statusFor };
+  /** Keeps a helper in this room, playing, whether or not anyone is there. */
+  function hold(channelId) {
+    held.add(channelId);
+    failedAt.delete(channelId);
+    evaluate(channelId);
+    return sessions.has(channelId) ? 'playing' : waiting.has(channelId) ? 'waiting' : 'off';
+  }
+
+  /** Lets the room go back to normal: the helper leaves after the usual delay once nobody is there. */
+  function unhold(channelId) {
+    if (!held.delete(channelId)) return false;
+    evaluate(channelId);
+    return true;
+  }
+
+  return { evaluate, scan, stopAll, describe, summon, release, statusFor, hold, unhold, isHeld: (id) => held.has(id) };
 }

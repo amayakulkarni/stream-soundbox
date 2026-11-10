@@ -127,6 +127,8 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
   const botIds = () => new Set([client.user.id, ...helpers.map((h) => h.client.user.id)]);
   const pd = { ...createProductivityAdapter({ client, guild }), setStatus: (channelId, text) => setStatus(client, channelId, text) };
   const ambienceConfig = loadAmbienceConfig();
+  // The camp room: the voice channel the elder-campfire sound plays in.
+  const campChannelId = () => [...matchRooms(ambienceConfig.rooms, ambienceChannels()).values()].find((r) => r.key === 'elder-campfire')?.channel.id ?? null;
   const ambienceChannels = () => voiceChannels(guild).map((c) => ({ ...c, ignore: c.id === cfg.elder.lobbyChannelId || Boolean(store.elderRoomByChannel(c.id)) }));
   if (env.ambienceOn && ambienceConfig.enabled) {
     helpers = await startHelperClients({ helpers: env.helpers, mainToken: env.token, guildId: env.guildId }, (t) => log(t));
@@ -140,6 +142,8 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
       log: (t) => log('ambience:', t),
     });
     ambience.scan();
+    // /camp start survives a restart: the campfire is lit again straight away.
+    if (store.leagueState('ambience:camp', '') === '1' && campChannelId()) ambience.hold(campChannelId());
     log(`ambience: ${helpers.length} of ${env.helpers.length} helper bots ready`);
   }
   const ambienceRoomIds = new Set(ambience ? [...matchRooms(ambienceConfig.rooms, ambienceChannels()).keys()] : []);
@@ -169,7 +173,7 @@ async function start({ env, cfg, store, client, contentIntent, ownWebhook, handl
     core.modLog(`A member used /forget-me: their data was deleted.`).catch(() => {});
   }
 
-  const route = createInteractionRouter({ cfg, env, store, sync, tickets, intro, league, pomodoro, vcTools, unlink, link, elderRooms, ambience, guild, core, forgetMe, log: (m) => log(m) });
+  const route = createInteractionRouter({ campChannelId, cfg, env, store, sync, tickets, intro, league, pomodoro, vcTools, unlink, link, elderRooms, ambience, guild, core, forgetMe, log: (m) => log(m) });
   for (const [from, to] of Object.entries(cfg.league?.renameKeys ?? {})) store.leagueRenameTeam(from, to);
   client.on('interactionCreate', route);
 

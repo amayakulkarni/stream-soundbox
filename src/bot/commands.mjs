@@ -81,6 +81,10 @@ export function buildCommands(cfg) {
       .addSubcommand((c) => c.setName('rename').setDescription('Rename the room').addStringOption((o) => o.setName('name').setDescription('New name').setRequired(true).setMaxLength(60)))
       .addSubcommand((c) => c.setName('limit').setDescription('Limit how many people fit (0 = no limit)').addIntegerOption((o) => o.setName('people').setDescription('Number of people').setRequired(true).setMinValue(0).setMaxValue(99)))
       .addSubcommand((c) => c.setName('close').setDescription('Close your room now')),
+    new S().setName('camp').setDescription('Owner: keep a helper playing in the Elder Campfire, even when it is empty').setDefaultMemberPermissions(mod)
+      .addSubcommand((c) => c.setName('start').setDescription('Light the campfire: a helper joins and stays until /camp stop'))
+      .addSubcommand((c) => c.setName('stop').setDescription('Put the campfire out: back to normal (the helper leaves once nobody is there)'))
+      .addSubcommand((c) => c.setName('status').setDescription('Is the camp running?')),
     new S().setName('ambience').setDescription('Mods: see which rooms have ambient sound and which bot is playing where').setDefaultMemberPermissions(mod),
     new ContextMenuCommandBuilder().setName('Pin in voice chat').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(member),
     new ContextMenuCommandBuilder().setName('Unpin from voice chat').setType(ApplicationCommandType.Message).setDefaultMemberPermissions(member),

@@ -73,3 +73,26 @@ test('members may use the soundboard and Activities in every voice room they can
   }
   for (const c of channels.filter((x) => x.kind === 'text')) for (const o of c.overwrites) assert.ok(!o.allow.includes(P.UseSoundboard), `${c.name} gets no voice-only bit`);
 });
+
+test('/camp: a held room keeps its helper with nobody there, and lets go on stop', async () => {
+  const { createAmbience, loadAmbienceConfig } = await import('../../src/bot/ambience.mjs');
+  const started = [];
+  const stopped = [];
+  const timers = [];
+  const pool = [{ name: 'Snitch Helper 1', busy: false, start: async (room, ch) => (started.push(ch.id), { stop: async () => stopped.push(ch.id) }) }];
+  const config = { ...loadAmbienceConfig('no-such-file.json', {}), leaveDelayMs: 20_000 };
+  const amb = createAmbience({ config, pool, humansIn: () => 0, channels: () => [{ id: 'fire', name: 'Elder Campfire', kind: 'voice' }], fsApi: { readdirSync: () => [], existsSync: (p) => p.endsWith('.ogg') }, setTimer: (fn) => (timers.push(fn), timers.length), clearTimer: () => {} });
+  amb.evaluate('fire');
+  assert.deepEqual(started, [], 'nobody there, nothing plays');
+  assert.equal(amb.hold('fire'), 'playing');
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(started, ['fire']);
+  amb.evaluate('fire');
+  for (const t of [...timers]) await t();
+  assert.deepEqual(stopped, [], 'stays while the camp runs, even empty');
+  assert.equal(amb.isHeld('fire'), true);
+  assert.equal(amb.unhold('fire'), true);
+  for (const t of [...timers]) await t();
+  assert.deepEqual(stopped, ['fire'], 'leaves once the camp is stopped and the room is empty');
+  assert.equal(amb.unhold('fire'), false);
+});
